@@ -1,7 +1,7 @@
 import React from 'react';
 import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { Link, Tabs } from 'expo-router';
-import { Pressable } from 'react-native';
+import { Pressable, SafeAreaView, SafeAreaViewBase } from 'react-native';
 
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
@@ -19,18 +19,24 @@ export default function TabLayout() {
   const colorScheme = useColorScheme();
 
   return (
+    <SafeAreaView style={{ flex: 1 }}>
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        // Disable the static render of the header on web
-        // to prevent a hydration error in React Navigation v6.
+        tabBarActiveTintColor: '#FC8019', // Color for active tab text
+        tabBarInactiveTintColor: 'gray',
+        headerStyle:{
+          backgroundColor:'black',
+        },
+        tabBarStyle: { backgroundColor: 'black' },
         headerShown: useClientOnlyValue(false, true),
       }}>
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Tab One',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+          title: 'Upcoming',
+          headerTintColor:'white',
+          headerTitleAlign:'center',
+          tabBarIcon: ({ color }) => <TabBarIcon name="archive" color={color} />,
           headerRight: () => (
             <Link href="/modal" asChild>
               <Pressable>
@@ -48,12 +54,15 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="two"
+        name="completed"
         options={{
-          title: 'Tab Two',
-          tabBarIcon: ({ color }) => <TabBarIcon name="code" color={color} />,
+          title: 'Completed',
+          headerTintColor:'white',
+          headerTitleAlign:'center',
+          tabBarIcon: ({ color }) => <TabBarIcon name="check" color={color} />,
         }}
       />
     </Tabs>
+    </SafeAreaView>
   );
 }
