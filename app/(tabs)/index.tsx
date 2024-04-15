@@ -1,9 +1,9 @@
-import { FlatList, StyleSheet, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, TouchableOpacity, useColorScheme, View } from 'react-native';
 import { upcomingGoals } from '@/assets/data/tasks'; // Assuming data structure
 import { Text, View as ThemedView } from '@/components/Themed';
 import GoalsListItem from '@/components/GoalListItem';
 import { Button, Checkbox } from 'react-native-paper'; // Assuming you're using React Native Paper for Checkbox
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { Link } from 'expo-router';
 import { FontAwesome5 } from '@expo/vector-icons';
 
@@ -22,6 +22,18 @@ type CheckboxState = {
 export default function TabOneScreen() {
   const [selectedGoals, setSelectedGoals] = useState<CheckboxState>({}); // State for selected goals
 
+  const useBackgroundColor = () => {
+    const colorScheme = useColorScheme();
+  
+    const backgroundColor = useMemo(() => {
+      return colorScheme === 'dark' ? 'black' : 'white';
+    }, [colorScheme]);
+  
+    return backgroundColor;
+  };
+  
+  const backgroundColor = useBackgroundColor();
+
   const handleCheckboxPress = (goal: Goal) => {
     setSelectedGoals((prevSelectedGoals) => ({
       ...prevSelectedGoals,
@@ -38,7 +50,7 @@ export default function TabOneScreen() {
 
 
   return (
-    <ThemedView style={styles.container}>
+    <ThemedView style={[styles.container, { backgroundColor }]}>
       <FlatList data={upcomingGoals} renderItem={renderItem} contentContainerStyle={styles.contentContainer} />
       <Link href={'/CreateTask'} asChild>
       <Button style={styles.addButton}>
@@ -52,7 +64,6 @@ export default function TabOneScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: 'black',
     marginTop:'auto',
   },
   contentContainer: {
@@ -67,7 +78,7 @@ const styles = StyleSheet.create({
     position: 'absolute', // Position absolutely for bottom right corner
     bottom: 20, // Customize button placement from bottom
     right: 20, // Customize button placement from right
-    backgroundColor: '#FC8019', // Customize button color
+    backgroundColor: '#5B04BC', // Customize button color
     padding: 10,
     borderRadius: 50, // TODO make it more round
   },

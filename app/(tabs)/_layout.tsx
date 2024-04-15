@@ -22,12 +22,12 @@ export default function TabLayout() {
     <SafeAreaView style={{ flex: 1 }}>
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: '#FC8019', // Color for active tab text
+        tabBarActiveTintColor: 'white', // Color for active tab text
         tabBarInactiveTintColor: 'gray',
         headerStyle:{
-          backgroundColor:'black',
+          backgroundColor:'#5B04BC',
         },
-        tabBarStyle: { backgroundColor: 'black' },
+        tabBarStyle: { backgroundColor: '#5B04BC' },
         headerShown: useClientOnlyValue(false, true),
       }}>
       <Tabs.Screen
