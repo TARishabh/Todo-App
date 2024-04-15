@@ -3,10 +3,22 @@ import { Stack } from 'expo-router';
 import { TextInput, View, TouchableOpacity, StyleSheet, Modal, Platform, Button } from 'react-native';
 import { Text, View as ThemedView } from '@/components/Themed';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNewTask } from '@/providers/newTaskContext';
+
+interface Goal {
+  id: number;
+  title: string;
+  description?: string; // Optional description field
+  targetDate: Date;
+  isCompleted: boolean; // If you need to track completion state
+}
+
 export default function CreateTask() {
+  const { setNewTaskAdded } = useNewTask();
   const today = new Date()
   const date_obj = new Date(today);
-
+  const [time, setTime] = useState(null); // Optional state for time
   // Format the date object to the desired format (YYYY/MM/DD)
   const formatted_date = date_obj.toLocaleDateString('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' });
   const formattedYear = formatted_date.slice(0,4)
@@ -36,6 +48,66 @@ export default function CreateTask() {
     setMode(currentMode)
   }
 
+  const saveTask = async () => {
+    if (!title) {
+      alert('Please enter a title for your task.');
+      return;
+    }
+  
+    const newTask = {
+      title,
+      description,
+      date, // Convert selected date to ISO string
+      time, // Optional time if set
+    };
+  
+    try {
+      // Retrieve existing tasks from AsyncStorage
+      const existingTasksString = await AsyncStorage.getItem('tasks');
+      let existingTasks: Goal[] = [];
+      if (existingTasksString) {
+        existingTasks = JSON.parse(existingTasksString);
+      }
+  
+      // Append the new task to the existing tasks
+      const updatedTasks = [...existingTasks, newTask];
+  
+      // Save the updated tasks back to AsyncStorage
+      await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks));
+  
+      alert('Task saved successfully!');
+      setNewTaskAdded(true);
+      setTitle(''); // Clear input fields after saving
+      setDescription('');
+      setDate(today);
+      setTime(null); // Reset time
+    } catch (error) {
+      console.error('Error saving task:', error);
+      alert('An error occurred while saving the task.');
+    }
+  };
+
+  const deleteTasks = async () =>{
+    console.log(await AsyncStorage.getItem('tasks'))
+    await AsyncStorage.removeItem('tasks')
+    console.log(await AsyncStorage.getItem('tasks'))
+  }
+
+  const retrieveTasks = async () => {
+    try {
+      const storedTasks = await AsyncStorage.getItem('tasks');
+      if (!storedTasks) {
+        return []; // Return empty array if no tasks are stored
+      }
+      const tasks = JSON.parse(storedTasks);
+      console.log(tasks)
+      return tasks;
+    } catch (error) {
+      console.error('Error retrieving tasks:', error);
+      return []; // Handle potential errors and return an empty array
+    }
+  };
+
 
 
 
@@ -62,7 +134,7 @@ export default function CreateTask() {
       />
     <Button title='DatePicker' onPress={()=>showMode('date')}/>
     <Button title='TimePicker' onPress={()=>showMode('time')}/>
-      <Button title='Create Task'  onPress={() => console.log('fjksahfjkashf')}/>
+      <Button title='Create Task'  onPress={saveTask}/>
       <Text>{text}</Text>
       {show && (
         <DateTimePicker

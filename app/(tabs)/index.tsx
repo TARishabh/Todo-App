@@ -3,9 +3,11 @@ import { upcomingGoals } from '@/assets/data/tasks'; // Assuming data structure
 import { Text, View as ThemedView } from '@/components/Themed';
 import GoalsListItem from '@/components/GoalListItem';
 import { Button, Checkbox } from 'react-native-paper'; // Assuming you're using React Native Paper for Checkbox
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Link } from 'expo-router';
 import { FontAwesome5 } from '@expo/vector-icons';
+import { useNewTask } from '@/providers/newTaskContext';
 
 interface Goal {
   id: number;
@@ -20,18 +22,20 @@ type CheckboxState = {
 };
 
 export default function TabOneScreen() {
+  const { newTaskAdded, setNewTaskAdded } = useNewTask();
   const [selectedGoals, setSelectedGoals] = useState<CheckboxState>({}); // State for selected goals
+  const [allGoals, setAllGoals] = useState<Goal[]>(upcomingGoals); // State for all goals (combined)
 
   const useBackgroundColor = () => {
     const colorScheme = useColorScheme();
-  
+
     const backgroundColor = useMemo(() => {
       return colorScheme === 'dark' ? 'black' : 'white';
     }, [colorScheme]);
-  
+
     return backgroundColor;
   };
-  
+
   const backgroundColor = useBackgroundColor();
 
   const handleCheckboxPress = (goal: Goal) => {
@@ -41,6 +45,56 @@ export default function TabOneScreen() {
     }));
   };
 
+  const fetchTasks = async () => {
+    try {
+      const storedTasks = await AsyncStorage.getItem('tasks');
+      if (!storedTasks) {
+        return; // No tasks stored, nothing to do
+      }
+  
+      let retrievedTasks;
+      try {
+        retrievedTasks = JSON.parse(storedTasks);
+      } catch (error) {
+        console.error('Error parsing stored tasks:', error);
+        return; // Handle potential parsing errors
+      }
+      console.log(retrievedTasks)
+  
+      // Check if it's a single object or an array
+      if (!Array.isArray(retrievedTasks)) {
+        retrievedTasks = [retrievedTasks]; // Wrap single object in an array
+      }
+  
+      // Convert date strings to Date objects in the required format
+      const formattedTasks = retrievedTasks.map((task: any) => ({
+        ...task,
+        targetDate: new Date(task.date),
+      }));
+  
+      // Assign unique IDs to each task
+      const tasksWithIds = formattedTasks.map((task: any, index: number) => ({
+        ...task,
+        id: index + 5, // Assuming IDs start from 1
+      }));
+      
+      console.log(tasksWithIds)
+      setAllGoals([...upcomingGoals, ...tasksWithIds]);
+    } catch (error) {
+      console.error('Error retrieving tasks:', error);
+    }
+  };
+  useEffect(() => {
+    if (newTaskAdded) {
+      fetchTasks();
+      setNewTaskAdded(false); // Reset the flag after fetching tasks
+    }
+  }, [newTaskAdded, setNewTaskAdded]);
+
+  useEffect(() => {
+    fetchTasks(); // Fetch tasks on component mount
+  }, []);
+
   const renderItem = ({ item }: { item: Goal }) => (
     <View style={styles.goalItemContainer}>
       <Checkbox status={selectedGoals[item.id] ? 'checked' : 'unchecked'} onPress={() => handleCheckboxPress(item)} />
@@ -48,19 +102,17 @@ export default function TabOneScreen() {
     </View>
   );
 
-
   return (
     <ThemedView style={[styles.container, { backgroundColor }]}>
-      <FlatList data={upcomingGoals} renderItem={renderItem} contentContainerStyle={styles.contentContainer} />
+      <FlatList data={allGoals} renderItem={renderItem} contentContainerStyle={styles.contentContainer} />
       <Link href={'/CreateTask'} asChild>
-      <Button style={styles.addButton}>
-      <FontAwesome5 style={styles.addButtonText} name="plus" size={24} color="white"/>
-      </Button>
+        <Button style={styles.addButton}>
+          <FontAwesome5 style={styles.addButtonText} name="plus" size={24} color="white" />
+        </Button>
       </Link>
     </ThemedView>
   );
 }
-
 const styles = StyleSheet.create({
   container: {
     flex: 1,
