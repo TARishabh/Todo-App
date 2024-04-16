@@ -72,12 +72,7 @@ export default function TabOneScreen() {
       }));
   
       // Assign unique IDs to each task
-      // const tasksWithIds = formattedTasks.map((task: any, index: number) => ({
-      //   ...task,
-      //   id: index + 5, // Assuming IDs start from 1
-      // }));
-      
-      console.log(formattedTasks)
+
       setAllGoals([...upcomingGoals, ...formattedTasks]);
     } catch (error) {
       console.error('Error retrieving tasks:', error);

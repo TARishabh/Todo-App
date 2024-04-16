@@ -1,8 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Pressable, Platform } from 'react-native';
+import { Stack, useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { useNavigation } from '@react-navigation/native';
+import { FontAwesome } from '@expo/vector-icons';
+import Colors from '@/constants/Colors';
+import { useColorScheme } from '@/components/useColorScheme';
+import DateTimePicker from '@react-native-community/datetimepicker';
+import { useNewTask } from '@/providers/newTaskContext';
+
 
 interface Goal {
   id: number;
@@ -13,43 +18,49 @@ interface Goal {
 }
 
 export default function TaskDetailsScreen() {
-  // const navigation = useNavigation();
-  const router = useRouter()
+  const router = useRouter();
+  const colorScheme = useColorScheme();
+  const { newTaskAdded, setNewTaskAdded } = useNewTask();
   const { id: idString } = useLocalSearchParams();
   const id = parseFloat(typeof idString === 'string' ? idString : idString[0]);
   const [task, setTask] = useState<Goal | null>(null);
   const [editedTask, setEditedTask] = useState<Partial<Goal>>({});
   const [isEditing, setIsEditing] = useState(false);
-  const [date,setDate] = useState('');
+  const [date, setDate] = useState(new Date().toDateString());
+  const [show, setShow] = useState(false);
+  const [mode, setMode] = useState<'date' | 'time' | 'datetime'>('date');
+  const [text, setText] = useState('Empty');
 
   // Fetch the task details based on the ID
-  useEffect(() => {
-    console.log('ID:', id);
-    console.log(typeof(id))
-    const fetchTask = async () => {
-      try {
-        const storedTasks = await AsyncStorage.getItem('tasks');
-        if (storedTasks) {
-          const tasks: any = JSON.parse(storedTasks);
-          const foundTask = tasks.find((eachTask:Goal)=>(
-            eachTask.id.toString() === id.toString()
-          ))
-          // console.log(foundTask)
-          if (foundTask) {
-            setTask(foundTask);
-            const extractedDate = foundTask?.targetDate ? new Date(foundTask.targetDate) : new Date();
-            // New state variable for date
-            const formattedDate = extractedDate.toLocaleDateString()
-            setDate(formattedDate); 
-            setEditedTask({ ...foundTask }); // Initialize editedTask with current task details
-          }
+  const fetchTask = async () => {
+    try {
+      const storedTasks = await AsyncStorage.getItem('tasks');
+      if (storedTasks) {
+        const tasks: any = JSON.parse(storedTasks);
+        const foundTask = tasks.find((eachTask: Goal) => eachTask.id.toString() === id.toString());
+        if (foundTask) {
+          setTask(foundTask);
+          const extractedDate = foundTask?.date ? new Date(foundTask.date) : new Date();
+          const formattedDate = extractedDate.toLocaleDateString();
+          setDate(formattedDate);
+          setEditedTask({ ...foundTask }); // Initialize editedTask with current task details
         }
-      } catch (error) {
-        console.error('Error fetching task:', error);
       }
-    };
+    } catch (error) {
+      console.error('Error fetching task:', error);
+    }
+  };
+  useEffect(() => {
     fetchTask();
   }, [id]);
+
+  useEffect(() => {
+    if (newTaskAdded) {
+      fetchTask();
+      setNewTaskAdded(false); // Reset the flag after fetching tasks
+    }
+  }, [newTaskAdded, setNewTaskAdded]);
+
   // Update task details
   const updateTask = async () => {
     try {
@@ -58,25 +69,60 @@ export default function TaskDetailsScreen() {
         const tasks: Goal[] = JSON.parse(storedTasks);
         const updatedTasks = tasks.map((t) => (t.id === task?.id ? { ...t, ...editedTask } : t));
         await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks));
-        router.push('/'); // Navigate back to home page
+        setIsEditing(false); // Exit edit mode after update
+        setNewTaskAdded(true)
       }
     } catch (error) {
       console.error('Error updating task:', error);
     }
   };
 
-  if (!task) {
-    // Handle case where task is not found
-    return (
-      <View style={styles.container}>
-        <Text style={styles.text}>Task not found.</Text>
-      </View>
-    );
-  }
+  const onChange = (event: any, selectedDate: Date) => {
+    if (selectedDate === undefined) {
+      setShow(false); // Hide the date and time picker modal
+      return; // Exit the function early
+    }
+  
+    const currentDate = selectedDate || date;
+    setShow(Platform.OS === 'ios');
+    setDate(currentDate);
+    let tempDate = new Date(currentDate);
+    let fDate = tempDate.getDate() + '/' + (tempDate.getMonth() + 1) + '/' + tempDate.getFullYear();
+    let fTime = 'Hours: ' + tempDate.getHours() + ' | Minutes: ' + tempDate.getMinutes();
+    setText(fDate + '\n' + fTime);
+  };
+
+  const showMode = (currentMode: 'date' | 'time' | 'datetime') => {
+    setShow(true);
+    setMode(currentMode);
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>
+      <Stack.Screen
+        options={{
+          title: `${task?.title || ''}`,
+          headerTitleAlign: 'center',
+          headerStyle: {
+            backgroundColor: 'white',
+          },
+          headerTintColor: 'black',
+          headerRight: () => (
+            <Pressable onPress={() => setIsEditing(!isEditing)}>
+              {({ pressed }) => (
+                <FontAwesome
+                  name="pencil"
+                  size={25}
+                  color={Colors[colorScheme ?? 'light'].text}
+                  style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
+                />
+              )}
+            </Pressable>
+          ),
+        }}
+      />
+      <View style={styles.row}>
+        <Text style={styles.label}>Title:</Text>
         {isEditing ? (
           <TextInput
             style={styles.editableText}
@@ -84,40 +130,48 @@ export default function TaskDetailsScreen() {
             onChangeText={(text) => setEditedTask({ ...editedTask, title: text })}
           />
         ) : (
-          task.title
+          <Text style={styles.taskText}>{task?.title || ''}</Text>
         )}
-      </Text>
-      {task.description && (
-        <TouchableOpacity onPress={() => setIsEditing(true)}>
-          <Text style={styles.description}>
-            {isEditing ? (
-              <TextInput
-                style={styles.editableText}
-                value={editedTask.description || ''}
-                onChangeText={(text) => setEditedTask({ ...editedTask, description: text })}
-              />
-            ) : (
-              task.description
-            )}
-          </Text>
+      </View>
+      {task?.description && (
+        <View style={styles.row}>
+          <Text style={styles.label}>Description:</Text>
+          {isEditing ? (
+            <TextInput
+              style={styles.editableText}
+              value={editedTask.description || ''}
+              onChangeText={(text) => setEditedTask({ ...editedTask, description: text })}
+            />
+          ) : (
+            <Text style={styles.taskText}>{task.description}</Text>
+          )}
+        </View>
+      )}
+      <View style={styles.row}>
+        <Text style={styles.label}>Date:</Text>
+        {isEditing ? (
+          <Pressable style={styles.editableText} onPress={() => showMode('date')}>
+            <Text>{date}</Text>
+          </Pressable>
+        ) : (
+          <Text>{date}</Text>
+        )}
+      </View>
+      {show && (
+      <DateTimePicker
+        testID="dateTimePicker"
+        value={date}
+        mode={mode}
+        is24Hour={true}
+        display="default"
+        onChange={onChange}
+      />
+)}
+      {isEditing && (
+        <TouchableOpacity onPress={updateTask}>
+          <Text style={styles.updateButton}>Update</Text>
         </TouchableOpacity>
       )}
-{date.length > 2 && (
-  <TouchableOpacity onPress={() => setIsEditing(true)}>
-  <Text style={styles.text}>
-    {isEditing ? (
-      <TextInput
-        style={styles.editableText}
-        value={editedTask.targetDate ? editedTask.targetDate.toLocaleDateString() : ''}
-        onChangeText={(text) => setEditedTask({ ...editedTask, targetDate: new Date(text) })}
-      />
-    ) : (
-      // Use nullish coalescing operator and convert to Date
-      date
-    )}
-  </Text>
-</TouchableOpacity>
-)}
     </View>
   );
 }
@@ -125,26 +179,28 @@ export default function TaskDetailsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff', // Set your desired background color here
+    backgroundColor: '#fff',
     padding: 20,
   },
-  title: {
-    fontSize: 24,
+  row: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  label: {
+    marginRight: 10,
     fontWeight: 'bold',
-    marginBottom: 10,
   },
-  description: {
-    marginBottom: 10,
-  },
-  text: {
-    marginBottom: 10,
+  taskText: {
+    flex: 1,
+    marginRight: 10,
   },
   editableText: {
+    flex: 1,
     borderWidth: 1,
     borderColor: 'gray',
     borderRadius: 5,
-    padding: 5,
-    marginBottom: 10,
+    padding: 10,
   },
   updateButton: {
     marginTop: 20,
