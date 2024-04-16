@@ -13,7 +13,7 @@ interface Goal {
   id: number;
   title: string;
   description?: string; // Optional description field
-  targetDate: Date;
+  date: Date;
   isCompleted: boolean; // If you need to track completion state
 }
 
@@ -26,7 +26,12 @@ export default function TaskDetailsScreen() {
   const [task, setTask] = useState<Goal | null>(null);
   const [editedTask, setEditedTask] = useState<Partial<Goal>>({});
   const [isEditing, setIsEditing] = useState(false);
-  const [date, setDate] = useState(new Date().toDateString());
+  const [date, setDate] = useState<Date>(new Date());
+  const date_obj = new Date();
+  const formatted_date = date_obj.toLocaleDateString('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' });
+  const formattedYear = formatted_date.slice(0,4)
+  const formattedMonth = formatted_date.slice(5,7)
+  const formattedDay = formatted_date.slice(8,10)
   const [show, setShow] = useState(false);
   const [mode, setMode] = useState<'date' | 'time' | 'datetime'>('date');
   const [text, setText] = useState('Empty');
@@ -41,8 +46,7 @@ export default function TaskDetailsScreen() {
         if (foundTask) {
           setTask(foundTask);
           const extractedDate = foundTask?.date ? new Date(foundTask.date) : new Date();
-          const formattedDate = extractedDate.toLocaleDateString();
-          setDate(formattedDate);
+          setDate(extractedDate);
           setEditedTask({ ...foundTask }); // Initialize editedTask with current task details
         }
       }
@@ -66,6 +70,9 @@ export default function TaskDetailsScreen() {
     try {
       const storedTasks = await AsyncStorage.getItem('tasks');
       if (storedTasks) {
+        if (editedTask) {
+          editedTask.date = date;
+        }
         const tasks: Goal[] = JSON.parse(storedTasks);
         const updatedTasks = tasks.map((t) => (t.id === task?.id ? { ...t, ...editedTask } : t));
         await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks));
@@ -85,7 +92,10 @@ export default function TaskDetailsScreen() {
   
     const currentDate = selectedDate || date;
     setShow(Platform.OS === 'ios');
+    console.log(date,'date before')
+    console.log(currentDate,'currentDate')
     setDate(currentDate);
+    console.log(date,'date after')
     let tempDate = new Date(currentDate);
     let fDate = tempDate.getDate() + '/' + (tempDate.getMonth() + 1) + '/' + tempDate.getFullYear();
     let fTime = 'Hours: ' + tempDate.getHours() + ' | Minutes: ' + tempDate.getMinutes();
@@ -151,10 +161,10 @@ export default function TaskDetailsScreen() {
         <Text style={styles.label}>Date:</Text>
         {isEditing ? (
           <Pressable style={styles.editableText} onPress={() => showMode('date')}>
-            <Text>{date}</Text>
+            <Text>{date.toDateString()}</Text>
           </Pressable>
         ) : (
-          <Text>{date}</Text>
+          <Text>{date.toDateString()}</Text>
         )}
       </View>
       {show && (
@@ -165,6 +175,7 @@ export default function TaskDetailsScreen() {
         is24Hour={true}
         display="default"
         onChange={onChange}
+        minimumDate={new Date(parseInt(formattedYear), parseInt(formattedMonth) - 1, parseInt(formattedDay))}
       />
 )}
       {isEditing && (
