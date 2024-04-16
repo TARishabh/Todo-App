@@ -48,6 +48,26 @@ export default function CreateTask() {
     setMode(currentMode)
   }
 
+  const generateTaskId = async () => {
+    try {
+      const storedTasks = await AsyncStorage.getItem('tasks');
+      console.log(storedTasks)
+      if (storedTasks) {
+        const tasks: Goal[] = JSON.parse(storedTasks);
+        // Use the length of the tasks array to generate a unique ID
+        const actualkey =  tasks.length + 10
+        return actualkey;
+      } else {
+        const actualkey =  10
+        return actualkey;
+      }
+    } catch (error) {
+      console.error('Error generating task ID:', error);
+    }
+    // Default to 1 if no tasks are stored or an error occurs
+
+  };
+
   const saveTask = async () => {
     if (!title) {
       alert('Please enter a title for your task.');
@@ -55,6 +75,7 @@ export default function CreateTask() {
     }
   
     const newTask = {
+      id: await generateTaskId(), // Generate a unique ID for the task
       title,
       description,
       date, // Convert selected date to ISO string

@@ -1,7 +1,8 @@
-import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { useLocalSearchParams } from 'expo-router';
-import { upcomingGoals } from '@/assets/data/tasks'; // Assuming data structure
+import React, { useEffect, useState } from 'react';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useNavigation } from '@react-navigation/native';
 
 interface Goal {
   id: number;
@@ -12,13 +13,60 @@ interface Goal {
 }
 
 export default function TaskDetailsScreen() {
-  const { id } = useLocalSearchParams(); // Get task ID from URL parameters
+  // const navigation = useNavigation();
+  const router = useRouter()
+  const { id: idString } = useLocalSearchParams();
+  const id = parseFloat(typeof idString === 'string' ? idString : idString[0]);
+  const [task, setTask] = useState<Goal | null>(null);
+  const [editedTask, setEditedTask] = useState<Partial<Goal>>({});
+  const [isEditing, setIsEditing] = useState(false);
+  const [date,setDate] = useState('');
 
-  // Find the specific goal based on ID
-  const goal = upcomingGoals.find((goal) => goal.id.toString() === id.toString());
+  // Fetch the task details based on the ID
+  useEffect(() => {
+    console.log('ID:', id);
+    console.log(typeof(id))
+    const fetchTask = async () => {
+      try {
+        const storedTasks = await AsyncStorage.getItem('tasks');
+        if (storedTasks) {
+          const tasks: any = JSON.parse(storedTasks);
+          const foundTask = tasks.find((eachTask:Goal)=>(
+            eachTask.id.toString() === id.toString()
+          ))
+          // console.log(foundTask)
+          if (foundTask) {
+            setTask(foundTask);
+            const extractedDate = foundTask?.targetDate ? new Date(foundTask.targetDate) : new Date();
+            // New state variable for date
+            const formattedDate = extractedDate.toLocaleDateString()
+            setDate(formattedDate); 
+            setEditedTask({ ...foundTask }); // Initialize editedTask with current task details
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching task:', error);
+      }
+    };
+    fetchTask();
+  }, [id]);
+  // Update task details
+  const updateTask = async () => {
+    try {
+      const storedTasks = await AsyncStorage.getItem('tasks');
+      if (storedTasks) {
+        const tasks: Goal[] = JSON.parse(storedTasks);
+        const updatedTasks = tasks.map((t) => (t.id === task?.id ? { ...t, ...editedTask } : t));
+        await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks));
+        router.push('/'); // Navigate back to home page
+      }
+    } catch (error) {
+      console.error('Error updating task:', error);
+    }
+  };
 
-  if (!goal) {
-    // Handle case where no goal is found
+  if (!task) {
+    // Handle case where task is not found
     return (
       <View style={styles.container}>
         <Text style={styles.text}>Task not found.</Text>
@@ -26,22 +74,50 @@ export default function TaskDetailsScreen() {
     );
   }
 
-  // Destructure goal properties
-  const { title, description, targetDate, isCompleted } = goal;
-
-  // Format target date (optional, adjust as needed)
-  const formattedDate = targetDate.toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
-      {description && <Text style={styles.description}>{description}</Text>}
-      <Text style={styles.text}>Target Date: {formattedDate}</Text>
-      <Text style={styles.text}>Completed: {isCompleted ? 'Yes' : 'No'}</Text>
+      <Text style={styles.title}>
+        {isEditing ? (
+          <TextInput
+            style={styles.editableText}
+            value={editedTask.title || ''}
+            onChangeText={(text) => setEditedTask({ ...editedTask, title: text })}
+          />
+        ) : (
+          task.title
+        )}
+      </Text>
+      {task.description && (
+        <TouchableOpacity onPress={() => setIsEditing(true)}>
+          <Text style={styles.description}>
+            {isEditing ? (
+              <TextInput
+                style={styles.editableText}
+                value={editedTask.description || ''}
+                onChangeText={(text) => setEditedTask({ ...editedTask, description: text })}
+              />
+            ) : (
+              task.description
+            )}
+          </Text>
+        </TouchableOpacity>
+      )}
+{date.length > 2 && (
+  <TouchableOpacity onPress={() => setIsEditing(true)}>
+  <Text style={styles.text}>
+    {isEditing ? (
+      <TextInput
+        style={styles.editableText}
+        value={editedTask.targetDate ? editedTask.targetDate.toLocaleDateString() : ''}
+        onChangeText={(text) => setEditedTask({ ...editedTask, targetDate: new Date(text) })}
+      />
+    ) : (
+      // Use nullish coalescing operator and convert to Date
+      date
+    )}
+  </Text>
+</TouchableOpacity>
+)}
     </View>
   );
 }
@@ -55,14 +131,26 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: 'bold',
-    color: '#000', // Set your desired text color here
+    marginBottom: 10,
   },
   description: {
-    marginTop: 10,
     marginBottom: 10,
-    color: '#808080', // Set your desired text color here
   },
   text: {
-    color: '#000', // Set your desired text color here
+    marginBottom: 10,
+  },
+  editableText: {
+    borderWidth: 1,
+    borderColor: 'gray',
+    borderRadius: 5,
+    padding: 5,
+    marginBottom: 10,
+  },
+  updateButton: {
+    marginTop: 20,
+    backgroundColor: 'blue',
+    color: 'white',
+    padding: 10,
+    textAlign: 'center',
   },
 });

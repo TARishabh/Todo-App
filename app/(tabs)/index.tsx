@@ -59,7 +59,6 @@ export default function TabOneScreen() {
         console.error('Error parsing stored tasks:', error);
         return; // Handle potential parsing errors
       }
-      console.log(retrievedTasks)
   
       // Check if it's a single object or an array
       if (!Array.isArray(retrievedTasks)) {
@@ -73,13 +72,13 @@ export default function TabOneScreen() {
       }));
   
       // Assign unique IDs to each task
-      const tasksWithIds = formattedTasks.map((task: any, index: number) => ({
-        ...task,
-        id: index + 5, // Assuming IDs start from 1
-      }));
+      // const tasksWithIds = formattedTasks.map((task: any, index: number) => ({
+      //   ...task,
+      //   id: index + 5, // Assuming IDs start from 1
+      // }));
       
-      console.log(tasksWithIds)
-      setAllGoals([...upcomingGoals, ...tasksWithIds]);
+      console.log(formattedTasks)
+      setAllGoals([...upcomingGoals, ...formattedTasks]);
     } catch (error) {
       console.error('Error retrieving tasks:', error);
     }
