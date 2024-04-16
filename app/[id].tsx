@@ -5,7 +5,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { FontAwesome } from '@expo/vector-icons';
 import Colors from '@/constants/Colors';
 import { useColorScheme } from '@/components/useColorScheme';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useNewTask } from '@/providers/newTaskContext';
 
 
@@ -84,7 +84,7 @@ export default function TaskDetailsScreen() {
     }
   };
 
-  const onChange = (event: any, selectedDate: Date) => {
+  const onChange = (event: DateTimePickerEvent, selectedDate: Date) => {
     if (selectedDate === undefined) {
       setShow(false); // Hide the date and time picker modal
       return; // Exit the function early
@@ -92,10 +92,7 @@ export default function TaskDetailsScreen() {
   
     const currentDate = selectedDate || date;
     setShow(Platform.OS === 'ios');
-    console.log(date,'date before')
-    console.log(currentDate,'currentDate')
     setDate(currentDate);
-    console.log(date,'date after')
     let tempDate = new Date(currentDate);
     let fDate = tempDate.getDate() + '/' + (tempDate.getMonth() + 1) + '/' + tempDate.getFullYear();
     let fTime = 'Hours: ' + tempDate.getHours() + ' | Minutes: ' + tempDate.getMinutes();

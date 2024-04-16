@@ -27,7 +27,7 @@ export default function CreateTask() {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(today)
-  const [mode,setMode] = useState('date')
+  const [mode, setMode] = useState<'date' | 'time' | 'datetime'>('date');
   const [show,setShow] = useState(false)
   const [text,setText] = useState('Empty')
 
@@ -43,7 +43,7 @@ export default function CreateTask() {
     // console.log(fDate + '(' + fTime + ')')
   }
 
-  const showMode = (currentMode:string) =>{
+  const showMode = (currentMode: 'date' | 'time' | 'datetime') =>{
     setShow(true)
     setMode(currentMode)
   }
@@ -51,7 +51,6 @@ export default function CreateTask() {
   const generateTaskId = async () => {
     try {
       const storedTasks = await AsyncStorage.getItem('tasks');
-      console.log(storedTasks)
       if (storedTasks) {
         const tasks: Goal[] = JSON.parse(storedTasks);
         // Use the length of the tasks array to generate a unique ID
@@ -80,6 +79,7 @@ export default function CreateTask() {
       description,
       date, // Convert selected date to ISO string
       time, // Optional time if set
+      isCompleted:false
     };
   
     try {
@@ -109,9 +109,7 @@ export default function CreateTask() {
   };
 
   const deleteTasks = async () =>{
-    console.log(await AsyncStorage.getItem('tasks'))
     await AsyncStorage.removeItem('tasks')
-    console.log(await AsyncStorage.getItem('tasks'))
   }
 
   const retrieveTasks = async () => {

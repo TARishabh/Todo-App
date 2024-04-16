@@ -38,13 +38,46 @@ export default function TabOneScreen() {
 
   const backgroundColor = useBackgroundColor();
 
-  const handleCheckboxPress = (goal: Goal) => {
+  const handleCheckboxPress = async (goal: Goal) => {
     setSelectedGoals((prevSelectedGoals) => ({
       ...prevSelectedGoals,
       [goal.id]: !prevSelectedGoals[goal.id], // Toggle selection based on previous state
     }));
+  
+    // Update the goal's isCompleted property to true in the frontend state
+    const updatedGoals = allGoals.map((g) => {
+      if (g.id.toString() === goal.id.toString()) {
+        return { ...g, isCompleted: true };
+      }
+      return g;
+    });
+  
+    // Filter out completed goals
+    const uncompletedGoals = updatedGoals.filter((goal) => !goal.isCompleted);
+  
+    // Update state with uncompleted goals
+    setAllGoals(uncompletedGoals);
+  
+    // Update task in backend storage
+    try {
+      const storedTasks = await AsyncStorage.getItem('tasks');
+      if (storedTasks) {
+        const tasks: Goal[] = JSON.parse(storedTasks);
+        const updatedTasks = tasks.map((t) => {
+          if (t.id.toString() === goal.id.toString()) {
+            return { ...t, isCompleted: true };
+          }
+          return t;
+        });
+        await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks));
+      }
+    } catch (error) {
+      console.error('Error updating task in AsyncStorage:', error);
+    }
+  
+    // Update newTaskAdded flag
+    setNewTaskAdded(true);
   };
-
   const fetchTasks = async () => {
     try {
       const storedTasks = await AsyncStorage.getItem('tasks');
@@ -70,10 +103,10 @@ export default function TabOneScreen() {
         ...task,
         targetDate: new Date(task.date),
       }));
-  
-      // Assign unique IDs to each task
+      const upcomingGoalsTest = formattedTasks.filter((task: any) => task.isCompleted === false);
 
-      setAllGoals([...upcomingGoals, ...formattedTasks]);
+      console.log(upcomingGoalsTest)
+      setAllGoals(upcomingGoalsTest);
     } catch (error) {
       console.error('Error retrieving tasks:', error);
     }
