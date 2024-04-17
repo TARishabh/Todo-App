@@ -1,6 +1,5 @@
 import { FlatList, StyleSheet, TouchableOpacity, useColorScheme, View } from 'react-native';
-import { upcomingGoals } from '@/assets/data/tasks'; // Assuming data structure
-import { Text, View as ThemedView } from '@/components/Themed';
+import { View as ThemedView } from '@/components/Themed';
 import GoalsListItem from '@/components/GoalListItem';
 import { Button, Checkbox } from 'react-native-paper'; // Assuming you're using React Native Paper for Checkbox
 import { useState, useMemo, useEffect } from 'react';
@@ -24,19 +23,10 @@ type CheckboxState = {
 export default function TabOneScreen() {
   const { newTaskAdded, setNewTaskAdded } = useNewTask();
   const [selectedGoals, setSelectedGoals] = useState<CheckboxState>({}); // State for selected goals
-  const [allGoals, setAllGoals] = useState<Goal[]>(upcomingGoals); // State for all goals (combined)
+  const [allGoals, setAllGoals] = useState<Goal[]>(); // State for all goals (combined)
+  const colorScheme = useColorScheme();
 
-  const useBackgroundColor = () => {
-    const colorScheme = useColorScheme();
-
-    const backgroundColor = useMemo(() => {
-      return colorScheme === 'dark' ? 'black' : 'white';
-    }, [colorScheme]);
-
-    return backgroundColor;
-  };
-
-  const backgroundColor = useBackgroundColor();
+  const backgroundColor = colorScheme === 'dark' ? '#000000' : '#F4F5F7';
 
   const handleCheckboxPress = async (goal: Goal) => {
     setSelectedGoals((prevSelectedGoals) => ({
@@ -45,18 +35,19 @@ export default function TabOneScreen() {
     }));
   
     // Update the goal's isCompleted property to true in the frontend state
-    const updatedGoals = allGoals.map((g) => {
-      if (g.id.toString() === goal.id.toString()) {
-        return { ...g, isCompleted: true };
-      }
-      return g;
-    });
+    if (allGoals){
+      const updatedGoals = allGoals.map((g) => {
+        if (g.id.toString() === goal.id.toString()) {
+          return { ...g, isCompleted: true };
+        }
+        return g;
+      });
+      const uncompletedGoals = updatedGoals.filter((goal) => !goal.isCompleted);
+      setAllGoals(uncompletedGoals);
+  }
   
     // Filter out completed goals
-    const uncompletedGoals = updatedGoals.filter((goal) => !goal.isCompleted);
   
-    // Update state with uncompleted goals
-    setAllGoals(uncompletedGoals);
   
     // Update task in backend storage
     try {
@@ -99,13 +90,12 @@ export default function TabOneScreen() {
       }
   
       // Convert date strings to Date objects in the required format
-      const formattedTasks = retrievedTasks.map((task: any) => ({
+      const formattedTasks = retrievedTasks.map((task) => ({
         ...task,
         targetDate: new Date(task.date),
       }));
-      const upcomingGoalsTest = formattedTasks.filter((task: any) => task.isCompleted === false);
+      const upcomingGoalsTest = formattedTasks.filter((task) => task.isCompleted === false);
 
-      console.log(upcomingGoalsTest)
       setAllGoals(upcomingGoalsTest);
     } catch (error) {
       console.error('Error retrieving tasks:', error);

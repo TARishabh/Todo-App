@@ -41,7 +41,7 @@ export default function TaskDetailsScreen() {
     try {
       const storedTasks = await AsyncStorage.getItem('tasks');
       if (storedTasks) {
-        const tasks: any = JSON.parse(storedTasks);
+        const tasks = JSON.parse(storedTasks);
         const foundTask = tasks.find((eachTask: Goal) => eachTask.id.toString() === id.toString());
         if (foundTask) {
           setTask(foundTask);
