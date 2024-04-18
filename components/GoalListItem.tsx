@@ -1,7 +1,9 @@
 import React from 'react';
-import { Pressable, View, Text, StyleSheet } from 'react-native';
+import { Pressable, View, Text, StyleSheet, useColorScheme } from 'react-native';
 import { Link } from 'expo-router';
 import { Goal } from '@/assets/data/tasks';
+import { useFonts ,Montserrat_600SemiBold,} from '@expo-google-fonts/montserrat';
+
 
 // TODO sort karna hai recent to least recent
 // TODO DELETE KA BUTTON DENA HAI
@@ -12,60 +14,61 @@ import { Goal } from '@/assets/data/tasks';
 // TODO designing karni hai 
 
 
+// TODO add font
+// TODO add perfect colors for dark mode on index.tsx
+
 type ItemType = {
   item: Goal
 }
 
 const GoalsListItem = ({ item }: ItemType) => {
-  return (
+  let [fontsLoaded] = useFonts({Montserrat_600SemiBold,});
+  const colorScheme = useColorScheme()
+  const backgroundColor = colorScheme === 'dark' ? '#000000' : '#F4F5F7';
+  const textColor = colorScheme === 'dark' ? 'white' : 'black';
+
+  return fontsLoaded && (
     <Link href={`/${item.id}`} asChild>
-      <Pressable
-        style={({ pressed }) => [
-          styles.goalItem,
-          {
-            backgroundColor: pressed ? '#DDDDDD' : '#FFFFFF',
-            shadowColor: pressed ? '#5804BC' : '#7700FF',
-          },
-        ]}
-      >
+      <Pressable style={styles.goalItem}>
         <View>
-          <Text style={styles.goalTitle}>{item.title}</Text>
+          <Text style={[styles.goalTitle,{color:textColor}]}>{item.title}</Text>
           {item.description && (
-            <Text style={styles.goalDescription}>{item.description}</Text>
+            <Text style={[styles.goalDescription , {color:textColor}]}>{item.description}</Text>
           )}
-          <Text style={styles.goalTargetDate}>
-            Target Date: {item.targetDate.toLocaleDateString()}
+          <Text style={[styles.goalTargetDate, {color:textColor}]}>
+            {item.targetDate.toLocaleDateString()}
           </Text>
         </View>
       </Pressable>
     </Link>
   );
-};
-
+}
 const styles = StyleSheet.create({
   goalItem: {
-    backgroundColor: '#FFFFFF',
-    borderWidth: 2,
-    borderColor: '#0000FF',
-    borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 1,
+    width:'93%'
   },
   goalTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 5,
+    marginBottom: '2%',
+    marginStart:1,
+    marginLeft:7,
+    fontFamily:'Montserrat_600SemiBold'
   },
   goalDescription: {
     fontSize: 14,
+    marginLeft:5,
+    fontFamily:'Montserrat_600SemiBold'
   },
   goalTargetDate: {
-    fontSize: 12,
+    fontSize: 13,
     marginTop: 5,
+    position: 'absolute', // Position absolutely
+    top: 0, // Align to the top
+    right: 10, // Align to the right
+    marginRight:10,
+    fontWeight:'bold',
+    fontFamily:'Montserrat_600SemiBold'
   },
 });
 

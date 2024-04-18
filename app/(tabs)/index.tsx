@@ -26,7 +26,8 @@ export default function TabOneScreen() {
   const [allGoals, setAllGoals] = useState<Goal[]>(); // State for all goals (combined)
   const colorScheme = useColorScheme();
 
-  const backgroundColor = colorScheme === 'dark' ? '#000000' : '#F4F5F7';
+  const backgroundColor = colorScheme === 'dark' ? '#111111' : '#F4F5F7';
+  const GoalListItemBackgroundColor = colorScheme === 'dark' ? '#212121' : '#FFFFFF';
 
   const handleCheckboxPress = async (goal: Goal) => {
     setSelectedGoals((prevSelectedGoals) => ({
@@ -113,7 +114,7 @@ export default function TabOneScreen() {
   }, []);
 
   const renderItem = ({ item }: { item: Goal }) => (
-    <View style={styles.goalItemContainer}>
+    <View style={[styles.goalItemContainer,{ backgroundColor:GoalListItemBackgroundColor }]}>
       <Checkbox status={selectedGoals[item.id] ? 'checked' : 'unchecked'} onPress={() => handleCheckboxPress(item)} />
       <GoalsListItem item={item} />
     </View>
@@ -142,17 +143,30 @@ const styles = StyleSheet.create({
   goalItemContainer: {
     flexDirection: 'row', // Arrange checkbox and goal item horizontally
     alignItems: 'center', // Align checkbox and goal item vertically
+    borderColor:'grey',
+    width:'auto',
+    height:100,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+    padding:10,
+    margin:8
   },
   addButton: {
     position: 'absolute', // Position absolutely for bottom right corner
     bottom: 20, // Customize button placement from bottom
     right: 20, // Customize button placement from right
     backgroundColor: '#5B04BC', // Customize button color
-    padding: 10,
+    padding: 12,
     borderRadius: 50, // TODO make it more round
   },
   addButtonText: {
     color: 'white', // Customize button text color
-    fontWeight: '900',
+    fontWeight: '700',
   },
 });

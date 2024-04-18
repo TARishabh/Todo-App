@@ -110,6 +110,7 @@ export default function CreateTask() {
 
   const deleteTasks = async () =>{
     await AsyncStorage.removeItem('tasks')
+
   }
 
   const retrieveTasks = async () => {

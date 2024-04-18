@@ -110,17 +110,18 @@ export default function TaskDetailsScreen() {
         options={{
           title: `${task?.title || ''}`,
           headerTitleAlign: 'center',
+          headerTintColor:'white',
           headerStyle: {
-            backgroundColor: 'white',
+            backgroundColor: '#5B04BC',
+            
           },
-          headerTintColor: 'black',
           headerRight: () => (
             <Pressable onPress={() => setIsEditing(!isEditing)}>
               {({ pressed }) => (
                 <FontAwesome
                   name="pencil"
                   size={25}
-                  color={Colors[colorScheme ?? 'light'].text}
+                  color={'white'}
                   style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
                 />
               )}
