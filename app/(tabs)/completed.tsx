@@ -22,9 +22,12 @@ type CheckboxState = {
 };
 
 export default function TabTwoScreen() {
+  const colorScheme = useColorScheme();
   const { newTaskAdded, setNewTaskAdded } = useNewTask();
   const [allGoals, setAllGoals] = useState<Goal[]>();
   const [selectedGoals, setSelectedGoals] = useState<CheckboxState>({});
+  const GoalListItemBackgroundColor = colorScheme === 'dark' ? '#212121' : '#FFFFFF';
+
 
   const useBackgroundColor = () => {
     const colorScheme = useColorScheme();
@@ -40,10 +43,10 @@ export default function TabTwoScreen() {
 
   const handleCheckboxPress = async (goal: Goal) => {
     // this commented code gives the full transition of selecting the task
-    // setSelectedGoals((prevSelectedGoals) => ({
-    //   ...prevSelectedGoals,
-    //   [goal.id]: !prevSelectedGoals[goal.id], // Toggle selection based on previous state
-    // }));
+    setSelectedGoals((prevSelectedGoals) => ({
+      ...prevSelectedGoals,
+      [goal.id]: !prevSelectedGoals[goal.id], // Toggle selection based on previous state
+    }));
   
     // Update the goal's isCompleted property to true in the frontend state
     if (allGoals){
@@ -114,16 +117,18 @@ export default function TabTwoScreen() {
   useEffect(() => {
     if (newTaskAdded) {
       fetchTasks();
+      setSelectedGoals({});
       setNewTaskAdded(false); // Reset the flag after fetching tasks
     }
   }, [newTaskAdded, setNewTaskAdded]);
 
   useEffect(() => {
+    setSelectedGoals({});
     fetchTasks(); // Fetch tasks on component mount
   }, []);
 
   const renderItem = ({ item }: { item: Goal }) => (
-    <View style={styles.goalItemContainer}>
+    <View style={[styles.goalItemContainer,{ backgroundColor:GoalListItemBackgroundColor }]}>
       <Checkbox status={selectedGoals[item.id] ? 'checked' : 'unchecked'} onPress={() => handleCheckboxPress(item)} />
       <GoalsListItem item={item} />
     </View>
@@ -148,6 +153,19 @@ const styles = StyleSheet.create({
   goalItemContainer: {
     flexDirection: 'row', // Arrange checkbox and goal item horizontally
     alignItems: 'center', // Align checkbox and goal item vertically
+    borderColor:'grey',
+    width:'auto',
+    height:80,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 4,
+    },
+    shadowOpacity: 0.2,
+    shadowRadius: 8,
+    elevation: 6,
+    padding:10,
+    margin:8
   },
   addButton: {
     position: 'absolute', // Position absolutely for bottom right corner

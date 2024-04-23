@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 import { Stack } from 'expo-router';
-import { TextInput, View, TouchableOpacity, StyleSheet, Modal, Platform, Button } from 'react-native';
+import { TextInput, View, TouchableOpacity, StyleSheet, Modal, Platform, Button, Pressable } from 'react-native';
 import { Text, View as ThemedView } from '@/components/Themed';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNewTask } from '@/providers/newTaskContext';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useToggleDarkMode } from '@/providers/modeContext';
+import { useFonts, Roboto_400Regular, Roboto_700Bold } from '@expo-google-fonts/roboto';
 
 interface Goal {
   id: number;
@@ -15,35 +18,42 @@ interface Goal {
 }
 
 export default function CreateTask() {
+  let [fontsLoaded] = useFonts({ Roboto_400Regular, Roboto_700Bold });
+
   const { setNewTaskAdded } = useNewTask();
+  const { isDarkMode } = useToggleDarkMode()
+  const backgroundColor = isDarkMode === true ? '#111111' : '#F4F5F7';
+  const GoalListItemBackgroundColor = isDarkMode === true ? '#212121' : '#FFFFFF';
+  const textColor = isDarkMode === true ? 'white' : 'black';
+
   const today = new Date()
   const date_obj = new Date(today);
   const [time, setTime] = useState(null); // Optional state for time
   // Format the date object to the desired format (YYYY/MM/DD)
   const formatted_date = date_obj.toLocaleDateString('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' });
-  const formattedYear = formatted_date.slice(0,4)
-  const formattedMonth = formatted_date.slice(5,7)
-  const formattedDay = formatted_date.slice(8,10)
+  const formattedYear = formatted_date.slice(0, 4)
+  const formattedMonth = formatted_date.slice(5, 7)
+  const formattedDay = formatted_date.slice(8, 10)
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [date, setDate] = useState(today)
   const [mode, setMode] = useState<'date' | 'time' | 'datetime'>('date');
-  const [show,setShow] = useState(false)
-  const [text,setText] = useState('Empty')
-
-  const onChange = (event:DateTimePickerEvent,selectedDate:Date) =>{
+  const [show, setShow] = useState(false)
+  const [text, setText] = useState('Empty')
+  const [selectedSize, setSelectedSize] = useState('Design');
+  const onChange = (event: DateTimePickerEvent, selectedDate: Date) => {
     const currentDate = selectedDate || date;
     setShow(Platform.OS === 'ios')
     setDate(currentDate);
     let tempDate = new Date(currentDate)
-    let fDate = tempDate.getDate() + '/' + (tempDate.getMonth() + 1) + '/' + tempDate.getFullYear() 
+    let fDate = tempDate.getDate() + '/' + (tempDate.getMonth() + 1) + '/' + tempDate.getFullYear()
     let fTime = 'Hours: ' + tempDate.getHours() + ' | Minutes: ' + tempDate.getMinutes()
     setText(fDate + '\n' + fTime)
 
     // console.log(fDate + '(' + fTime + ')')
   }
 
-  const showMode = (currentMode: 'date' | 'time' | 'datetime') =>{
+  const showMode = (currentMode: 'date' | 'time' | 'datetime') => {
     setShow(true)
     setMode(currentMode)
   }
@@ -54,10 +64,10 @@ export default function CreateTask() {
       if (storedTasks) {
         const tasks: Goal[] = JSON.parse(storedTasks);
         // Use the length of the tasks array to generate a unique ID
-        const actualkey =  tasks.length + 10
+        const actualkey = tasks.length + 10
         return actualkey;
       } else {
-        const actualkey =  10
+        const actualkey = 10
         return actualkey;
       }
     } catch (error) {
@@ -72,16 +82,16 @@ export default function CreateTask() {
       alert('Please enter a title for your task.');
       return;
     }
-  
+
     const newTask = {
       id: await generateTaskId(), // Generate a unique ID for the task
       title,
       description,
       date, // Convert selected date to ISO string
       time, // Optional time if set
-      isCompleted:false
+      isCompleted: false
     };
-  
+
     try {
       // Retrieve existing tasks from AsyncStorage
       const existingTasksString = await AsyncStorage.getItem('tasks');
@@ -89,13 +99,13 @@ export default function CreateTask() {
       if (existingTasksString) {
         existingTasks = JSON.parse(existingTasksString);
       }
-  
+
       // Append the new task to the existing tasks
       const updatedTasks = [...existingTasks, newTask];
-  
+
       // Save the updated tasks back to AsyncStorage
       await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks));
-  
+
       alert('Task saved successfully!');
       setNewTaskAdded(true);
       setTitle(''); // Clear input fields after saving
@@ -108,7 +118,7 @@ export default function CreateTask() {
     }
   };
 
-  const deleteTasks = async () =>{
+  const deleteTasks = async () => {
     await AsyncStorage.removeItem('tasks')
 
   }
@@ -129,42 +139,71 @@ export default function CreateTask() {
   };
 
 
+  const sizes = ['Design', 'Development', 'Research', 'Review'];
 
-
-  return (
-    <ThemedView style={styles.container}>
-      <Stack.Screen options={{
-        title: `Create Task`, headerTitleAlign: 'center', headerStyle: {
-          backgroundColor: 'black',
-        },
-        headerTintColor: 'white'
-      }}
+  return fontsLoaded && (
+    <ThemedView style={[styles.container, { backgroundColor }]}>
+      <Stack.Screen
+        options={{
+          title: `Create New Task`,
+          headerTitleAlign: 'center',
+          headerStyle: {
+            backgroundColor: 'transparent',
+          },
+          headerBackground: () => (
+            <View style={{ flex: 1 }}>
+              <LinearGradient
+                colors={['#ad1bed', '#6e72fc']} // Dynamic gradient colors based on dark mode state
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{ flex: 1 }}
+              />
+            </View>
+          ),
+          headerTintColor: 'white'
+        }}
       />
+      <Text style={{ color: textColor, marginBottom: '2%', marginLeft: '2%', fontSize: 30, fontWeight: 'bold', fontFamily: 'Roboto_700Bold' }}>Task Name</Text>
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: 'white', borderColor: 'grey', borderWidth: 2, borderRadius: 50 }]}
         placeholder="Title"
         value={title}
         onChangeText={setTitle}
       />
+
+      <Text style={{ color: textColor, marginTop: '2%', marginBottom: '2%', marginLeft: '2%', fontSize: 25, fontWeight: 'bold', fontFamily: 'Roboto_700Bold' }}>Category</Text>
+
+      <View style={{ flexDirection: 'row', marginBottom: 10 }}>
+        {sizes.map((size) => (
+          <Pressable
+            key={size}
+            onPress={() => setSelectedSize(size)}
+            style={[styles.size, { backgroundColor: selectedSize === size ? 'gainsboro' : 'white', width: '24%' }]}
+          >
+            <Text style={[styles.sizeText, { color: selectedSize === size ? 'black' : 'grey',   }]}>{size}</Text>
+
+          </Pressable>
+        ))}
+      </View>
       <TextInput
-        style={styles.input}
+        style={[styles.input, { backgroundColor: 'white', borderColor: 'grey', borderWidth: 1 }]}
         placeholder="Description (Optional)"
         value={description}
         onChangeText={setDescription}
       />
-    <Button title='DatePicker' onPress={()=>showMode('date')}/>
-    <Button title='TimePicker' onPress={()=>showMode('time')}/>
-      <Button title='Create Task'  onPress={saveTask}/>
+      <Button title='DatePicker' onPress={() => showMode('date')} />
+      <Button title='TimePicker' onPress={() => showMode('time')} />
+      <Button title='Create Task' onPress={saveTask} />
       <Text>{text}</Text>
       {show && (
         <DateTimePicker
-        testID='dateTimePicker'
-        value={date}
-        mode={mode}
-        is24Hour={true}
-        display='default'
-        onChange={onChange}
-        minimumDate={new Date(parseInt(formattedYear), parseInt(formattedMonth) - 1, parseInt(formattedDay))}
+          testID='dateTimePicker'
+          value={date}
+          mode={mode}
+          is24Hour={true}
+          display='default'
+          onChange={onChange}
+          minimumDate={new Date(parseInt(formattedYear), parseInt(formattedMonth) - 1, parseInt(formattedDay))}
         />
       )}
     </ThemedView>
@@ -173,6 +212,18 @@ export default function CreateTask() {
 // style={styles.submitButton}
 
 const styles = StyleSheet.create({
+  sizeText: {
+    fontSize: 15,
+    fontWeight: '400'
+  },
+  size: {
+    backgroundColor: 'gainsboro',
+    alignItems: 'center',
+    aspectRatio: 1,
+    justifyContent: 'center',
+    flexDirection: 'row', // Display items in a row horizontally
+    marginRight: 10, // Add spacing between items
+  },
   container: {
     flex: 1,
     backgroundColor: '#fff', // Set background color as desired
@@ -196,3 +247,15 @@ const styles = StyleSheet.create({
     fontSize: 16,
   },
 });
+
+
+// TODO sort karna hai recent to least recent
+// TODO INFO KI JAGEH MODE KA BUTTON DENA HAI, LIGHT OR DARK KA -> DONE
+// TODO search ka option dena hai
+// TODO mic ka option dena hai to create task
+// TODO agar kisi task ka time exceed ho jaaye to alarm baj jaana chaiye (if this not possible, then us task ko alag hi top pe highlight karde, ki ye bacha hua hai)
+// TODO designing karni hai
+// TODO give a delete icon to delete all tasks, or specific tasks.
+
+// TODO add font
+// TODO add perfect colors for dark mode on index.tsx
