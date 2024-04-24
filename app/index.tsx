@@ -6,13 +6,16 @@ import { Redirect, useRouter } from 'expo-router';
 const Index = () => {
   const router = useRouter(); // Initialize useRouter hook
 
-  const [isFirstVisit, setIsFirstVisit] = useState(true); // Assume first visit initially
+  const [isFirstVisit, setIsFirstVisit] = useState<boolean | null>(null); // Initialize state with null
 
   useEffect(() => {
     const checkIsNewUser = async () => {
       const storedValue = await AsyncStorage.getItem('isFirstVisit');
-    //   console.log('storedValue:', storedValue); // Log retrieved value
-      setIsFirstVisit(storedValue === null); // Update state based on storage
+      if (storedValue !== null) {
+        setIsFirstVisit(storedValue === 'true'); // Update state based on storage
+      } else {
+        setIsFirstVisit(true); // Treat as first visit if storage value is null
+      }
     };
 
     checkIsNewUser();
@@ -20,10 +23,8 @@ const Index = () => {
 
   const handleOnPress = async () => {
     await AsyncStorage.setItem('isFirstVisit', 'false'); // Set flag for future visits
-    router.push('/'); // Redirect to home page after button click
+    router.push('/(tabs)/'); // Redirect to tabs after button click
   };
-
-//   console.log('isFirstVisit (after effect):', isFirstVisit); // Log state for debugging
 
   return (
     <>

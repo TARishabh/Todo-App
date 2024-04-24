@@ -184,7 +184,7 @@ export default function TabOneScreen() {
       </View>
       <FlatList data={allGoals} renderItem={renderItem} contentContainerStyle={styles.contentContainer} />
       <Link href={'/CreateTask'} asChild>
-        <Button onLongPress={() => console.log('long pressed')} style={styles.addButton}>
+        <Button onLongPress={async () => await AsyncStorage.removeItem('isFirstVisit')} style={styles.addButton}>
           <FontAwesome5 style={[styles.addButtonText]} name="plus" size={24} color="white" />
         </Button>
       </Link>
