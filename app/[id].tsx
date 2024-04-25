@@ -165,6 +165,16 @@ export default function TaskDetailsScreen() {
           <Text>{date.toDateString()}</Text>
         )}
       </View>
+      <View style={styles.row}>
+        <Text style={styles.label}>Date:</Text>
+        {isEditing ? (
+          <Pressable style={styles.editableText} onPress={() => showMode('date')}>
+            <Text>{date.toString()}</Text>
+          </Pressable>
+        ) : (
+          <Text>{date.toString()}</Text>
+        )}
+      </View>
       {show && (
       <DateTimePicker
         testID="dateTimePicker"

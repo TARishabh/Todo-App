@@ -29,17 +29,7 @@ export default function TabTwoScreen() {
   const GoalListItemBackgroundColor = colorScheme === 'dark' ? '#212121' : '#FFFFFF';
 
 
-  const useBackgroundColor = () => {
-    const colorScheme = useColorScheme();
 
-    const backgroundColor = useMemo(() => {
-      return colorScheme === 'dark' ? 'black' : 'white';
-    }, [colorScheme]);
-
-    return backgroundColor;
-  };
-
-  const backgroundColor = useBackgroundColor();
 
   const handleCheckboxPress = async (goal: Goal) => {
     // this commented code gives the full transition of selecting the task
@@ -135,7 +125,7 @@ export default function TabTwoScreen() {
   );
 
   return (
-    <ThemedView style={[styles.container, { backgroundColor }]}>
+    <ThemedView style={[styles.container, { backgroundColor:'black' }]}>
       <FlatList data={allGoals} renderItem={renderItem} contentContainerStyle={styles.contentContainer} />
     </ThemedView>
   );

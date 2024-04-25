@@ -116,13 +116,21 @@ export default function TabOneScreen() {
         ...task,
         targetDate: new Date(task.date),
       }));
-      const upcomingGoalsTest = formattedTasks.filter((task) => task.isCompleted === false);
-
-      setAllGoals(upcomingGoalsTest);
+  
+      // Sort tasks based on targetDate from most recent to least recent
+      formattedTasks.sort((a, b) => b.targetDate - a.targetDate);
+  
+      setAllGoals(formattedTasks);
     } catch (error) {
       console.error('Error retrieving tasks:', error);
     }
   };
+  
+  const on_long_press = async()=>{
+    await AsyncStorage.removeItem('isFirstVisit')
+    console.log("removed item")
+  }
+
   useEffect(() => {
     if (newTaskAdded) {
       fetchTasks();
@@ -184,7 +192,8 @@ export default function TabOneScreen() {
       </View>
       <FlatList data={allGoals} renderItem={renderItem} contentContainerStyle={styles.contentContainer} />
       <Link href={'/CreateTask'} asChild>
-        <Button onLongPress={async () => await AsyncStorage.removeItem('isFirstVisit')} style={styles.addButton}>
+
+        <Button onLongPress={on_long_press} style={styles.addButton}>
           <FontAwesome5 style={[styles.addButtonText]} name="plus" size={24} color="white" />
         </Button>
       </Link>

@@ -5,7 +5,6 @@ import { Pressable, SafeAreaView } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useClientOnlyValue } from '@/components/useClientOnlyValue';
 import { useToggleDarkMode } from '@/providers/modeContext';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 // You can explore the built-in icon families and icons on the web at https://icons.expo.fyi/
 function TabBarIcon(props: {
   name: React.ComponentProps<typeof FontAwesome>['name'];
@@ -27,7 +26,7 @@ export default function TabLayout() {
       <Tabs
         screenOptions={{
           tabBarActiveTintColor: 'white',
-          tabBarInactiveTintColor: '#000000',
+          tabBarInactiveTintColor: '#414C50',
           headerStyle: {
             backgroundColor: 'transparent',
           },
