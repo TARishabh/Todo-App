@@ -292,6 +292,8 @@ export default function CreateTask() {
 
 }
 
+// TEST COMMIT
+
 const styles = StyleSheet.create({
   sizeText: {
     fontSize: 15,
