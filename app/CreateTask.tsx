@@ -52,6 +52,7 @@ export default function CreateTask() {
     let fTime = 'Hours: ' + tempDate.getHours() + ' | Minutes: ' + tempDate.getMinutes()
     // console.log(`${tempDate.getHours()}:${tempDate.getMinutes()}`)
     setText(fDate + '\n' + fTime)
+    // console.log(fTime)
 
     // console.log(fDate + '(' + fTime + ')')
   }
@@ -125,7 +126,7 @@ export default function CreateTask() {
     await AsyncStorage.removeItem('tasks')
 
   }
-// TODO dark mode work nahi kar raha hai
+  // TODO dark mode work nahi kar raha hai
   const retrieveTasks = async () => {
     try {
       const storedTasks = await AsyncStorage.getItem('tasks');
@@ -141,12 +142,19 @@ export default function CreateTask() {
     }
   };
 
-
+  const formatTime = (date: Date): string => {
+    const hours = date.getHours();
+    const minutes = date.getMinutes();
+    const formattedHours = hours < 10 ? `0${hours}` : hours; // Ensure double digits for hours
+    const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes; // Ensure double digits for minutes
+    // const meridiem = hours < 12 ? 'AM' : 'PM'; // Determine if it's morning or afternoon
+    return `${formattedHours}:${formattedMinutes}`; // Combine hours, minutes, and meridiem
+  };
   const sizes = ['Personal', 'Work'];
 
   return fontsLoaded && (
-    <KeyboardAvoidingView style={[styles.container, { backgroundColor:'white' }]} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <ThemedView style={{ flex: 1, justifyContent: 'space-between' }}>
+    <KeyboardAvoidingView style={[styles.container, { backgroundColor }]} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <ThemedView style={{ flex: 1, justifyContent: 'space-between', backgroundColor: backgroundColor }}>
         <Stack.Screen
           options={{
             title: `Create New Task`,
@@ -168,57 +176,105 @@ export default function CreateTask() {
           }}
         />
         <View>
+          <View style={{ marginBottom: 6 }}>
           <Text style={{ color: textColor, marginBottom: '2%', marginLeft: '2%', fontSize: 25, marginTop: '2%', fontWeight: 'bold', fontFamily: 'Roboto_900Black' }}>Task Name</Text>
           <TextInput
-            style={[styles.input, { backgroundColor: 'white', borderColor: 'grey', borderWidth: 2, borderRadius: 10, width: '94%', marginLeft: '3%' }]}
-            placeholder="Title"
+            style={[styles.input, { backgroundColor: GoalListItemBackgroundColor, borderColor: 'grey', width: '93%', marginLeft: '4%', color: textColor, }]}
+            placeholder="Add Title"
+            placeholderTextColor={textColor}
             value={title}
             onChangeText={setTitle}
           />
-  
+          </View>
+
           <Text style={{ color: textColor, marginTop: '2%', marginBottom: '2%', marginLeft: '2%', fontSize: 25, fontWeight: 'bold', fontFamily: 'Roboto_900Black' }}>Category</Text>
-  
-          <View style={{ width: '100%', height: 50, flexDirection: 'row', marginBottom: 10 }}>
+
+          <View style={{ width: '100%', height: 50, flexDirection: 'row', marginBottom: 15 }}>
             {sizes.map((size) => (
-              <Pressable onPress={() => setSelectedSize(size)} key={size} style={{ opacity: 0.5, borderRadius: 10, marginLeft: '4%', marginRight: '8%', height: '100%', width: '40%', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', borderWidth: 2, borderColor: 'black', backgroundColor: selectedSize === size ? 'blue' : 'white' }}>
-                <Text>{size}</Text>
+              <Pressable onPress={() => setSelectedSize(size)} key={size} style={{ borderRadius: 10, marginLeft: '4%', marginRight: '8%', height: '100%', width: '40%' }}>
+                {selectedSize === size ? (
+                  <LinearGradient
+                    colors={['#1464c4', '#2198d6']} // Colors converted from RGB to HEX
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={{ flex: 1, borderRadius: 10, justifyContent: 'center', alignItems: 'center', }}
+                  >
+                    <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 20 }}>{size}</Text>
+                  </LinearGradient>
+                ) : (
+                  <View style={{ flex: 1, borderRadius: 10, backgroundColor: GoalListItemBackgroundColor, justifyContent: 'center', alignItems: 'center' }}>
+                    <Text style={{ color: textColor, fontWeight: 'bold', fontSize: 20 }}>{size}</Text>
+                  </View>
+                )}
               </Pressable>
             ))}
           </View>
-          <Text style={{ color: textColor, marginTop: '2%', marginBottom: '2%', marginLeft: '2%', fontSize: 25, fontWeight: 'bold', fontFamily: 'Roboto_900Black' }}>Date & Time</Text>
-  
-          <View style={{ width: '100%', height: 50, flexDirection: 'row', marginBottom: 10 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', borderWidth: 2, borderColor: 'black', borderRadius: 10, marginLeft: '4%', marginRight: '8%', width: '40%' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 5 }}>
+            <View>
+              <Text style={{ color: textColor, marginTop: '2%', marginBottom: '2%',marginLeft:'11%', fontSize: 25, fontWeight: 'bold', fontFamily: 'Roboto_900Black' }}>Date</Text>
+            </View>
+            <View>
+              <Text style={{ color: textColor, marginTop: '2%', marginBottom: '2%', marginRight: '30%', fontSize: 25, fontWeight: 'bold', fontFamily: 'Roboto_900Black' }}>Time</Text>
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 10 }}>
+            {/* Date Input */}
+            <View style={{ backgroundColor: GoalListItemBackgroundColor, flexDirection: 'row', alignItems: 'center', borderRadius: 10, width: '40%', marginLeft: '4%', marginRight: '8%', }}>
               <TextInput
-                style={{ opacity: 0.5, height: '100%', width: '75%', fontSize: 16 }}
+                style={{ color: textColor, opacity: 0.9, height: 50, width: '75%', fontSize: 16, marginLeft: '5%' }}
                 placeholder='Date'
-                value={date.toLocaleString().slice(0, 9)}
+                value={date.toLocaleDateString().slice(0, 10)}
               />
-              <TouchableOpacity onPress={() => showMode('date')} style={{ position: 'absolute', right: 0, marginRight: 10 }}>
+              <TouchableOpacity onPress={() => showMode('date')} style={{ marginRight: 10 }}>
                 <FontAwesome5 name="calendar" size={24} color={textColor} />
               </TouchableOpacity>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-around', borderWidth: 2, borderColor: 'black', borderRadius: 10, marginLeft: '4%', marginRight: '8%', width: '40%' }}>
+
+            {/* Time Input */}
+            <View style={{ backgroundColor: GoalListItemBackgroundColor, flexDirection: 'row', alignItems: 'center', borderRadius: 10, width: '40%', marginLeft: '4%', marginRight: '8%', }}>
               <TextInput
-                style={{ opacity: 0.5, height: '100%', width: '75%', fontSize: 16 }}
+                style={{ color: textColor, opacity: 0.9, height: 50, width: '75%', fontSize: 17, marginLeft: '8%', marginRight: '3%' }}
                 placeholder='Time'
-                value={date.toLocaleString().slice(10, 15)}
+                // value={date.toLocaleTimeString().slice(0, -3)} // Updated slicing to exclude the last 3 characters (i.e., the seconds and colon)
+                value={formatTime(date)}
               />
               <TouchableOpacity onPress={() => showMode('time')} style={{ position: 'absolute', right: 0, marginRight: 10 }}>
                 <FontAwesome5 name="clock" size={24} color={textColor} />
               </TouchableOpacity>
             </View>
+
           </View>
+          <Text style={{ color: textColor, marginBottom: '3%', marginLeft: '3%', fontSize: 25, marginTop: '2%', fontWeight: 'bold', fontFamily: 'Roboto_900Black' }}>Description</Text>
           <TextInput
-            style={[styles.input, { backgroundColor: 'white', borderColor: 'grey', borderWidth: 1 }]}
-            placeholder="Description (Optional)"
+            style={[styles.input, { backgroundColor: GoalListItemBackgroundColor, borderRadius: 10, width: '93%', marginLeft: '4%', color: textColor, height: '35%', textAlignVertical: 'top' }]}
+            placeholder="Add Description"
+            placeholderTextColor={textColor}
             value={description}
             onChangeText={setDescription}
           />
         </View>
-        <View style={{marginBottom: 20 }}>
-          <Button color={'#5B04BC'} title='Create Task' onPress={saveTask} />
+        <View style={{ marginBottom: 20, }}>
+          <Pressable onPress={saveTask} style={{ borderRadius: 10, width: 'auto' }}>
+            {({ pressed }) => (
+              <LinearGradient
+                colors={['#1464c4', '#2198d6']} // Adjust gradient colors as needed
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{
+                  borderRadius: 10,
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  paddingVertical: 10,
+                  paddingHorizontal: 20,
+                  opacity: pressed ? 0.8 : 1, // Adjust opacity on press
+                }}
+              >
+                <Text style={{ color: 'white', fontWeight: 'bold', fontSize: 20 }}>Create Task</Text>
+              </LinearGradient>
+            )}
+          </Pressable>
         </View>
+
         {show && (
           <DateTimePicker
             testID='dateTimePicker'
@@ -233,7 +289,7 @@ export default function CreateTask() {
       </ThemedView>
     </KeyboardAvoidingView>
   );
-  
+
 }
 
 const styles = StyleSheet.create({

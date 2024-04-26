@@ -7,6 +7,8 @@ import { useEffect, useMemo, useState } from 'react';
 import GoalsListItem from '@/components/GoalListItem';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useNewTask } from '@/providers/newTaskContext';
+import { useToggleDarkMode } from '@/providers/modeContext';
+import { useFonts ,Roboto_400Regular,Roboto_700Bold} from '@expo-google-fonts/roboto';
 
 
 interface Goal {
@@ -22,11 +24,15 @@ type CheckboxState = {
 };
 
 export default function TabTwoScreen() {
+  let [fontsLoaded] = useFonts({Roboto_400Regular,Roboto_700Bold});
   const colorScheme = useColorScheme();
   const { newTaskAdded, setNewTaskAdded } = useNewTask();
   const [allGoals, setAllGoals] = useState<Goal[]>();
   const [selectedGoals, setSelectedGoals] = useState<CheckboxState>({});
-  const GoalListItemBackgroundColor = colorScheme === 'dark' ? '#212121' : '#FFFFFF';
+  const {isDarkMode} = useToggleDarkMode()
+  const backgroundColor = isDarkMode === true ? '#111111' : '#F4F5F7';
+  const GoalListItemBackgroundColor = isDarkMode === true ? '#212121' : '#FFFFFF';
+  const HeadingFontStyle = 'Roboto_700Bold'
 
 
 
@@ -97,8 +103,8 @@ export default function TabTwoScreen() {
         targetDate: new Date(task.date),
       }));
       const upcomingGoalsTest = formattedTasks.filter((task) => task.isCompleted === true);
-
-      setAllGoals(upcomingGoalsTest);
+      const test = upcomingGoalsTest.sort((a, b) => b.targetDate - a.targetDate);
+      setAllGoals(test);
     } catch (error) {
       console.error('Error retrieving tasks:', error);
     }
@@ -125,7 +131,7 @@ export default function TabTwoScreen() {
   );
 
   return (
-    <ThemedView style={[styles.container, { backgroundColor:'black' }]}>
+    <ThemedView style={[styles.container, { backgroundColor}]}>
       <FlatList data={allGoals} renderItem={renderItem} contentContainerStyle={styles.contentContainer} />
     </ThemedView>
   );
