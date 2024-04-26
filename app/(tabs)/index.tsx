@@ -57,39 +57,38 @@ export default function TabOneScreen() {
     }));
   
     // Update the goal's isCompleted property to true in the frontend state
-    if (allGoals){
+    if (allGoals) {
       const updatedGoals = allGoals.map((g) => {
         if (g.id.toString() === goal.id.toString()) {
           return { ...g, isCompleted: true };
         }
         return g;
       });
+  
+      // Filter out completed goals and update state
       const uncompletedGoals = updatedGoals.filter((goal) => !goal.isCompleted);
       setAllGoals(uncompletedGoals);
-  }
   
-    // Filter out completed goals
-  
-  
-    // Update task in backend storage
-    try {
-      const storedTasks = await AsyncStorage.getItem('tasks');
-      if (storedTasks) {
-        const tasks: Goal[] = JSON.parse(storedTasks);
-        const updatedTasks = tasks.map((t) => {
-          if (t.id.toString() === goal.id.toString()) {
-            return { ...t, isCompleted: true };
-          }
-          return t;
-        });
-        await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks));
+      // Update task in backend storage
+      try {
+        const storedTasks = await AsyncStorage.getItem('tasks');
+        if (storedTasks) {
+          const tasks: Goal[] = JSON.parse(storedTasks);
+          const updatedTasks = tasks.map((t) => {
+            if (t.id.toString() === goal.id.toString()) {
+              return { ...t, isCompleted: true };
+            }
+            return t;
+          });
+          await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks));
+        }
+      } catch (error) {
+        console.error('Error updating task in AsyncStorage:', error);
       }
-    } catch (error) {
-      console.error('Error updating task in AsyncStorage:', error);
-    }
   
-    // Update newTaskAdded flag
-    setNewTaskAdded(true);
+      // Update newTaskAdded flag
+      setNewTaskAdded(true);
+    }
   };
   const fetchTasks = async () => {
     try {
@@ -116,16 +115,13 @@ export default function TabOneScreen() {
         ...task,
         targetDate: new Date(task.date),
       }));
-  
-      // Sort tasks based on targetDate from most recent to least recent
-      formattedTasks.sort((a, b) => b.targetDate - a.targetDate);
-  
-      setAllGoals(formattedTasks);
+      const upcomingGoalsTest = formattedTasks.filter((task) => task.isCompleted === false);
+      const test = upcomingGoalsTest.sort((a, b) => b.targetDate - a.targetDate);
+      setAllGoals(test);
     } catch (error) {
       console.error('Error retrieving tasks:', error);
     }
   };
-  
   const on_long_press = async()=>{
     await AsyncStorage.removeItem('isFirstVisit')
     console.log("removed item")
