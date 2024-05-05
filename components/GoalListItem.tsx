@@ -24,7 +24,7 @@ const GoalsListItem = ({ item }: ItemType) => {
             {item.targetDate.toLocaleDateString()}
           </Text>
         </View>
-        <FontAwesome5 name="chevron-right" size={24} style={styles.icon} />
+        <FontAwesome5 name="chevron-right" size={18} style={[styles.icon, {color:textColor}]} />
       </Pressable>
     </Link>
   );

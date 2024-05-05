@@ -23,9 +23,6 @@ export default function CreateTask() {
     setDate(propDate)
   }
 
-
-
-
   return (
     <ThemedView style={styles.container}>
       <Stack.Screen options={{

@@ -62,16 +62,6 @@ export default function TabLayout() {
 
             headerRight: () => (
               <>
-                {/* <Pressable onPress={handleSearchPress}>
-                  {({ pressed }) => (
-                    <FontAwesome
-                      name="search"
-                      size={25}
-                      color={'white'}
-                      style={{ marginRight: 15, opacity: pressed ? 0.5 : 1 }}
-                    />
-                  )}
-                </Pressable> */}
                 <Pressable onPress={toggleDarkMode}>
                   {({ pressed }) => (
                     <FontAwesome

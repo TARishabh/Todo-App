@@ -1,6 +1,6 @@
-import React, { useRef, useState } from 'react';
-import { Stack } from 'expo-router';
-import { TextInput, View, TouchableOpacity, StyleSheet, Modal, Platform, Button, Pressable, KeyboardAvoidingView, ScrollView } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { Stack, useLocalSearchParams } from 'expo-router';
+import { TextInput, View, TouchableOpacity, StyleSheet, Modal, Platform, Button, Pressable, KeyboardAvoidingView } from 'react-native';
 import { Text, View as ThemedView } from '@/components/Themed';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -10,9 +10,6 @@ import { useToggleDarkMode } from '@/providers/modeContext';
 import { useFonts, Roboto_400Regular, Roboto_700Bold, Roboto_900Black } from '@expo-google-fonts/roboto';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import * as Notifications from 'expo-notifications';
-
-
 
 interface Goal {
   id: number;
@@ -20,29 +17,26 @@ interface Goal {
   description?: string; // Optional description field
   targetDate: Date;
   isCompleted: boolean; // If you need to track completion state
+  time:string
 }
 
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldPlaySound: false,
-    shouldSetBadge: false,
-  }),
-});
 
-export default function CreateTask() {
 
+export default function UpdateTask() {
+    const { id: idString } = useLocalSearchParams();
+    const id = parseFloat(typeof idString === 'string' ? idString : idString[0]);
+      const [editedTask, setEditedTask] = useState<Partial<Goal>>({});
+    
   let [fontsLoaded] = useFonts({ Roboto_400Regular, Roboto_700Bold, Roboto_900Black });
-
+  const [task, setTask] = useState<Goal | null>(null);
   const { setNewTaskAdded } = useNewTask();
   const { isDarkMode } = useToggleDarkMode()
   const backgroundColor = isDarkMode === true ? '#111111' : '#F4F5F7';
   const GoalListItemBackgroundColor = isDarkMode === true ? '#212121' : '#FFFFFF';
   const textColor = isDarkMode === true ? 'white' : 'black';
-
+  const [text, setText] = useState('Empty');
   const today = new Date()
   const date_obj = new Date(today);
-  const [time, setTime] = useState(null); // Optional state for time
   // Format the date object to the desired format (YYYY/MM/DD)
   const formatted_date = date_obj.toLocaleDateString('en-CA', { year: 'numeric', month: '2-digit', day: '2-digit' });
   const formattedYear = formatted_date.slice(0, 4)
@@ -53,7 +47,6 @@ export default function CreateTask() {
   const [date, setDate] = useState(today)
   const [mode, setMode] = useState<'date' | 'time' | 'datetime'>('date');
   const [show, setShow] = useState(false)
-  const [text, setText] = useState('Empty')
   const router = useRouter();
   const [selectedSize, setSelectedSize] = useState('Personal');
   const onChange = (event: DateTimePickerEvent, selectedDate: Date) => {
@@ -70,94 +63,33 @@ export default function CreateTask() {
     // console.log(fDate + '(' + fTime + ')')
   }
 
-
+  const fetchTask = async () => {
+    try {
+      const storedTasks = await AsyncStorage.getItem('tasks');
+      if (storedTasks) {
+        const tasks = JSON.parse(storedTasks);
+        const foundTask = tasks.find((eachTask: Goal) => eachTask.id.toString() === id.toString());
+        if (foundTask) {
+          setTask(foundTask);
+          const extractedDate = foundTask?.date ? new Date(foundTask.date) : new Date();
+          setDate(extractedDate);
+          setEditedTask({ ...foundTask }); // Initialize editedTask with current task details
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching task:', error);
+    }
+  };
+  useEffect(() => {
+    fetchTask();
+  }, [id]);
+  
 
   const showMode = (currentMode: 'date' | 'time' | 'datetime') => {
     setShow(true)
     setMode(currentMode)
   }
 
-  const generateTaskId = async () => {
-    try {
-      const storedTasks = await AsyncStorage.getItem('tasks');
-      if (storedTasks) {
-        const tasks: Goal[] = JSON.parse(storedTasks);
-        // Use the length of the tasks array to generate a unique ID
-        const actualkey = tasks.length + 10
-        return actualkey;
-      } else {
-        const actualkey = 10
-        return actualkey;
-      }
-    } catch (error) {
-      console.error('Error generating task ID:', error);
-    }
-    // Default to 1 if no tasks are stored or an error occurs
-
-  };
-
-  const saveTask = async () => {
-    if (!title) {
-      alert('Please enter a title for your task.');
-      return;
-    }
-
-    const newTask = {
-      id: await generateTaskId(), // Generate a unique ID for the task
-      title,
-      description,
-      date, // Convert selected date to ISO string
-      time: formatTime(date), // Optional time if set
-      isCompleted: false,
-      category: selectedSize
-    };
-
-    try {
-      // Retrieve existing tasks from AsyncStorage
-      const existingTasksString = await AsyncStorage.getItem('tasks');
-      let existingTasks: Goal[] = [];
-      if (existingTasksString) {
-        existingTasks = JSON.parse(existingTasksString);
-      }
-
-      // Append the new task to the existing tasks
-      const updatedTasks = [...existingTasks, newTask];
-
-      // Save the updated tasks back to AsyncStorage
-      await AsyncStorage.setItem('tasks', JSON.stringify(updatedTasks));
-
-      alert('Task saved successfully!');
-      setNewTaskAdded(true);
-      setTitle(''); // Clear input fields after saving
-      setDescription('');
-      setDate(today);
-      setTime(null); // Reset time
-      router.push('/(tabs)')
-    } catch (error) {
-      console.error('Error saving task:', error);
-      alert('An error occurred while saving the task.');
-    }
-  };
-
-  const deleteTasks = async () => {
-    await AsyncStorage.removeItem('tasks')
-
-  }
-  // TODO dark mode work nahi kar raha hai
-  const retrieveTasks = async () => {
-    try {
-      const storedTasks = await AsyncStorage.getItem('tasks');
-      if (!storedTasks) {
-        return []; // Return empty array if no tasks are stored
-      }
-      const tasks = JSON.parse(storedTasks);
-      console.log(tasks)
-      return tasks;
-    } catch (error) {
-      console.error('Error retrieving tasks:', error);
-      return []; // Handle potential errors and return an empty array
-    }
-  };
 
   const formatTime = (date: Date): string => {
     const hours = date.getHours();
@@ -170,7 +102,6 @@ export default function CreateTask() {
   const sizes = ['Personal', 'Work'];
 
   return fontsLoaded && (
-
     <KeyboardAvoidingView style={[styles.container, { backgroundColor }]} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <ThemedView style={{ flex: 1, justifyContent: 'space-between', backgroundColor: backgroundColor }}>
         <Stack.Screen
@@ -274,7 +205,7 @@ export default function CreateTask() {
           />
         </View>
         <View style={{ marginBottom: 20, }}>
-          <Pressable onPress={saveTask} style={{ borderRadius: 10, width: 'auto' }}>
+          <Pressable onPress={UpdateTask} style={{ borderRadius: 10, width: 'auto' }}>
             {({ pressed }) => (
               <LinearGradient
                 colors={['#1464c4', '#2198d6']} // Adjust gradient colors as needed
